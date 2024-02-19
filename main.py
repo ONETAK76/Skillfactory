@@ -1,41 +1,97 @@
-def print_board(board):
-    for row in board:
-        print(" | ".join(row))
-        print("-" * 9)
+import random
 
-def check_winner(board, player):
-    for row in board:
-        if all([cell == player for cell in row]):
-            return True
-    for col in range(3):
-        if all([board[row][col] == player for row in range(3)]):
-            return True
-    if all([board[i][i] == player for i in range(3)]) or all([board[i][2-i] == player for i in range(3)]):
-        return True
-    return False
+class Ship:
+    def __init__(self, positions):
+        self.positions = positions
+        self.hits = [False] * len(positions)
 
-def is_full(board):
-    return all([cell != " " for row in board for cell in row])
+class Board:
+    def __init__(self, size):
+        self.size = size
+        self.ships = []
+        self.grid = [['O' for _ in range(size)] for _ in range(size)]
+
+    def place_ship(self, ship):
+        for x, y in ship.positions:
+            self.grid[x][y] = '■'
+
+    def print_board(self):
+        print("   | 1 | 2 | 3 | 4 | 5 | 6 |")
+        for i in range(self.size):
+            print(f"{i+1} | {' | '.join(self.grid[i])} |")
+
+    def check_hit(self, x, y):
+        if self.grid[x][y] == '■':
+            self.grid[x][y] = 'X'
+            for ship in self.ships:
+                if (x, y) in ship.positions:
+                    ship.hits[ship.positions.index((x, y))] = True
+                    if all(ship.hits):
+                        print("Корабль потоплен!")
+            return True
+        elif self.grid[x][y] == 'O':
+            self.grid[x][y] = 'T'
+            return False
+        else:
+            raise ValueError("Вы уже стреляли в эту клетку!")
+
+def generate_ship_positions(size, length):
+    positions = []
+    while len(positions) < length:
+        x = random.randint(0, size - 1)
+        y = random.randint(0, size - 1)
+        position = (x, y)
+        if position not in positions:
+            positions.append(position)
+    return positions
 
 def main():
-    board = [[" " for _ in range(3)] for _ in range(3)]
-    current_player = "X"
-    while not check_winner(board, "X") and not check_winner(board, "O") and not is_full(board):
-        print_board(board)
-        row = int(input(f"Player {current_player}, enter the row (0, 1, 2): "))
-        col = int(input(f"Player {current_player}, enter the column (0, 1, 2): "))
-        if board[row][col] == " ":
-            board[row][col] = current_player
-            current_player = "O" if current_player == "X" else "X"
-        else:
-            print("This cell is already taken!")
-    print_board(board)
-    if check_winner(board, "X"):
-        print("Player X wins!")
-    elif check_winner(board, "O"):
-        print("Player O wins!")
-    else:
-        print("It's a draw!")
+    player_board = Board(6)
+    computer_board = Board(6)
+
+    for _ in range(4):
+        ship_positions = generate_ship_positions(6, 1)
+        player_board.ships.append(Ship(ship_positions))
+        player_board.place_ship(player_board.ships[-1])
+
+        ship_positions = generate_ship_positions(6, 1)
+        computer_board.ships.append(Ship(ship_positions))
+        computer_board.place_ship(computer_board.ships[-1])
+
+    player_board.print_board()
+
+    while True:
+        try:
+            player_move_x = int(input("Введите номер строки для выстрела (1-6): ")) - 1
+            player_move_y = int(input("Введите номер столбца для выстрела (1-6): ")) - 1
+
+            if player_board.check_hit(player_move_x, player_move_y):
+                print("Попадание!")
+            else:
+                print("Промах!")
+
+            player_board.print_board()
+
+            # Ход компьютера
+            computer_move_x = random.randint(0, 5)
+            computer_move_y = random.randint(0, 5)
+
+            if computer_board.check_hit(computer_move_x, computer_move_y):
+                print("Компьютер попал!")
+            else:
+                print("Компьютер промахнулся!")
+
+            computer_board.print_board()
+
+            if all(all(cell != '■' for cell in row) for row in player_board.grid):
+                print("Победил компьютер!")
+                break
+            elif all(all(cell != '■' for cell in row) for row in computer_board.grid):
+                print("Вы победили!")
+                break
+
+        except (ValueError, IndexError):
+            print("Некорректный ввод. Попробуйте снова.")
 
 if __name__ == "__main__":
     main()
