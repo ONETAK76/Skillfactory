@@ -1,0 +1,68 @@
+import random
+
+# Функция для создания игрового поля
+def create_board(size):
+    board = [['O' for _ in range(size)] for _ in range(size)]
+    return board
+
+# Функция для вывода игрового поля на экран
+def print_board(board):
+    for row in board:
+        print(" ".join(row))
+
+# Функция для размещения корабля на игровом поле
+def place_ship(board, ship_size):
+    size = len(board)
+    direction = random.choice(['horizontal', 'vertical'])
+    if direction == 'horizontal':
+        x = random.randint(0, size - 1)
+        y = random.randint(0, size - ship_size)
+        for i in range(ship_size):
+            board[x][y + i] = 'X'
+    else:
+        x = random.randint(0, size - ship_size)
+        y = random.randint(0, size - 1)
+        for i in range(ship_size):
+            board[x + i][y] = 'X'
+
+# Функция для проверки попадания
+def check_hit(board, x, y):
+    if board[x][y] == 'X':
+        board[x][y] = '*'
+        return True
+    else:
+        board[x][y] = 'M'
+        return False
+
+# Основная функция игры
+def play_battleship(size, num_ships):
+    board = create_board(size)
+
+    for _ in range(num_ships):
+        ship_size = random.randint(2, 4)
+        place_ship(board, ship_size)
+
+    print("Давайте играть в Морской бой!")
+    print_board(board)
+
+    while True:
+        try:
+            x = int(input("Введите номер строки (0-{}): ".format(size - 1)))
+            y = int(input("Введите номер столбца (0-{}): ".format(size - 1)))
+
+            if check_hit(board, x, y):
+                print("Попадание!")
+            else:
+                print("Мимо!")
+
+            print_board(board)
+
+            if all(all(cell != 'X' for cell in row) for row in board):
+                print("Поздравляем, вы потопили все корабли!")
+                break
+
+        except ValueError:
+            print("Пожалуйста, введите целое число.")
+
+if __name__ == "__main__":
+    play_battleship(5, 3)  # Размер поля: 5x5, количество кораблей: 3
